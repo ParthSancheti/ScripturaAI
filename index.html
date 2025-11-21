@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scriptura AI | Ultimate Handwriting Studio</title>
+    <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'%3E%3Cpath d='M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z' /%3E%3C/svg%3E">
+
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Convert digital text into realistic handwriting.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            light: '#eef2f6',
+                            dark: '#0f172a',
+                            accent: '#6366f1'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Bad+Script&family=Caveat:wght@400;700&family=Cedarville+Cursive&family=Covered+By+Your+Grace&family=Dancing+Script&family=Dawning+of+a+New+Day&family=Gloria+Hallelujah&family=Gochi+Hand&family=Grape+Nuts&family=Homemade+Apple&family=Indie+Flower&family=Just+Another+Hand&family=Kalam&family=Kristi&family=La+Belle+Aurore&family=Marck+Script&family=Mr+Dafoe&family=Nanum+Pen+Script&family=Nothing+You+Could+Do&family=Pacifico&family=Patrick+Hand&family=Permanent+Marker&family=Reenie+Beanie&family=Rock+Salt&family=Sacramento&family=Shadows+Into+Light&family=Short+Stack&family=Waiting+for+the+Sunrise&family=Zeyada&display=swap" rel="stylesheet">
+
+    <style>
+        /* Add inside <style> tag */
+        .custom-dropdown-content {
+            /* existing styles... */
+            max-height: 0; overflow: hidden; transition: 0.3s;
+        }
+        /* Update the open state to allow scrolling for 10 items */
+        .custom-dropdown-content.open {
+            max-height: 350px; opacity: 1; transform: translateY(0); overflow-y: auto;
+        }
+
+        /* Better Font Option Styling (Works in modern browsers) */
+        select option {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 15px;
+            font-size: 16px;
+        }
+        /* --- CORE THEME: PURE BLUR --- */
+        :root {
+            --glass-blur: 40px;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        html.dark {
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #f3f4f6;
+            color: #1e293b;
+            overflow: hidden; /* Prevent body scroll, we handle it internally */
+            transition: background 0.3s;
+        }
+        html.dark body { background-color: #020617; color: #e2e8f0; }
+
+        /* Wallpaper */
+        .wallpaper {
+            position: fixed; inset: 0; z-index: -2;
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') no-repeat center center;
+            background-size: cover;
+            filter: blur(50px) opacity(0.5) saturate(1.2);
+        }
+
+        /* Pure Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 24px;
+        }
+
+        /* Buttons */
+        .glass-btn {
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+        .glass-btn:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
+        .glass-btn:active { transform: scale(0.95); }
+        
+        .btn-active { background: rgba(0,0,0,0.1) !important; border-color: rgba(0,0,0,0.2) !important; color: #4f46e5; }
+
+        /* ANDROID 16 STYLE SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 24px; cursor: pointer;
+            background: rgba(0,0,0,0.05); border-radius: 16px;
+            backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.5);
+        }
+        html.dark input[type=range]::-webkit-slider-runnable-track { background: rgba(255,255,255,0.1); }
+        
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px; width: 30px; border-radius: 12px;
+            background: #6366f1; cursor: pointer; -webkit-appearance: none;
+            margin-top: 1px; margin-left: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: width 0.2s;
+        }
+        input[type=range]:hover::-webkit-slider-thumb { width: 34px; }
+
+        /* Custom Dropdown */
+        .custom-dropdown-content {
+            max-height: 0; overflow: hidden; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0; transform: translateY(-10px);
+        }
+        .custom-dropdown-content.open {
+            max-height: 400px; opacity: 1; transform: translateY(0); overflow-y: auto;
+        }
+
+        /* Animation */
+        .animate-enter { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Layout Tweaks */
+        #paperCanvas { transition: filter 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .scan-overlay { mix-blend-mode: multiply; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+        
+        /* Sidebar Popup */
+        #sidebarPopup {
+            position: absolute; top: 85px; left: 24px; width: 260px;
+            transform: scale(0.95); opacity: 0; pointer-events: none;
+            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 60;
+        }
+        #sidebarPopup.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+
+        /* Scrollbar */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+
+        /* Modal */
+        .modal-backdrop { background: rgba(0,0,0,0.2); backdrop-filter: blur(15px); opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="wallpaper"></div>
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-3"></div>
+
+    <div id="exportModal" class="modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Export Document</h2>
+                <button onclick="toggleModal('exportModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/10"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="app.setExportFormat('pdf')" id="btn-fmt-pdf" class="glass-btn p-4 rounded-xl flex flex-col items-center gap-2 border-blue-500 border-2 bg-blue-50/50">
+                    <i class="fas fa-file-pdf text-3xl text-red-500"></i>
+                    <span class="font-bold text-sm">PDF File</span>
+                </button>
+                <button onclick="app.setExportFormat('img')" id="btn-fmt-img" class="glass-btn p-4 rounded-xl flex flex-col items-center gap-2 border-transparent">
+                    <i class="fas fa-image text-3xl text-purple-500"></i>
+                    <span class="font-bold text-sm">Image (PNG)</span>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label class="text-xs font-bold uppercase opacity-60 mb-2 block">Page Range</label>
+                <div class="glass-btn p-1 rounded-lg flex">
+                    <button onclick="app.setExportRange('current')" id="btn-range-curr" class="flex-1 py-2 rounded-md text-xs font-bold bg-white/50 shadow-sm">Current Page</button>
+                    <button onclick="app.setExportRange('all')" id="btn-range-all" class="flex-1 py-2 rounded-md text-xs font-bold opacity-60">All Pages</button>
+                </div>
+            </div>
+
+            <button onclick="app.processExport()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl transition transform hover:scale-[1.02]">
+                Download Now
+            </button>
+        </div>
+    </div>
+
+    <div id="sidebarPopup" class="glass-panel flex flex-col p-2 shadow-2xl border border-white/50">
+        <div class="px-4 py-3 border-b border-black/5 mb-2">
+            <div class="text-xs font-bold text-gray-400 uppercase">Menu</div>
+        </div>
+        <button onclick="app.switchTab('home')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-black/5 transition flex items-center gap-3 text-sm font-medium">
+            <i class="fas fa-pen-nib w-6 text-center text-blue-500"></i> Studio
+        </button>
+        <button onclick="app.switchTab('history')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-black/5 transition flex items-center gap-3 text-sm font-medium">
+            <i class="fas fa-history w-6 text-center text-purple-500"></i> Archives
+        </button>
+        <div class="my-2 border-t border-black/5"></div>
+        <button class="w-full text-left px-4 py-3 rounded-xl hover:bg-black/5 transition flex items-center gap-3 text-sm font-medium">
+            <i class="fas fa-info-circle w-6 text-center text-gray-400"></i> About
+        </button>
+    </div>
+
+    <nav class="fixed top-0 left-0 w-full h-20 z-50 px-6 flex items-center justify-between pointer-events-none">
+        <div class="pointer-events-auto flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="glass-btn w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-lg text-gray-700">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="text-2xl font-bold tracking-tight text-gray-800 dark:text-white">
+                Scriptura<span class="text-indigo-500">AI</span>
+            </div>
+        </div>
+
+        <div class="pointer-events-auto">
+            <button onclick="app.toggleTheme()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-gray-700 dark:text-white">
+                <i class="fas fa-adjust"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main id="mainGrid" class="w-full h-screen grid lg:grid-cols-[30%_70%] grid-cols-1 pt-24 pb-32 px-4 lg:px-8 gap-6 box-border relative">
+        
+        <section id="previewCol" class="flex flex-col gap-4 animate-enter" style="animation-delay: 0.1s">
+            
+            <div class="flex-none h-[500px] glass-panel relative flex items-center justify-center overflow-hidden bg-black/5 group">
+                <div id="canvasContainer" class="transform transition-transform duration-300 origin-center scale-[0.7] lg:scale-[0.6]">
+                    <canvas id="paperCanvas" class="bg-white"></canvas>
+                    <div id="scannerLayer" class="scan-overlay absolute inset-0 bg-white z-10" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxmaWx0ZXIgaWQ9Im4iPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjUiIG51bU9jdGF2ZXM9IjEiIHN0aXRjaFRpbGVzPSJub1N0aXRjaCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InRyYW5zcGFyZW50Ii8+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI24pIiBvcGFjaXR5PSIwLjUiLz48L3N2Zz4=');"></div>
+                </div>
+                
+                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 glass-panel px-4 py-1 flex items-center gap-4 shadow-lg z-20">
+                    <button onclick="app.prevPage()" class="w-8 h-8 flex items-center justify-center hover:text-blue-500"><i class="fas fa-chevron-left"></i></button>
+                    <span class="text-xs font-mono font-bold">Pg <span id="currentPage">1</span></span>
+                    <button onclick="app.nextPage()" class="w-8 h-8 flex items-center justify-center hover:text-blue-500"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="glass-panel relative z-30 mt-auto"> <button onclick="toggleDropdown('paperDropdown')" class="w-full p-4 flex items-center justify-between hover:bg-white/20 transition rounded-2xl">
+        <div class="flex items-center gap-4">
+            <div id="paperIcon" class="w-10 h-10 rounded-lg border border-gray-300 bg-white shadow-sm transition-all"></div>
+            <div class="text-left">
+                <div class="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Surface</div>
+                <div class="font-bold text-base text-gray-800 dark:text-white" id="paperName">Standard Lined</div>
+            </div>
+        </div>
+        <i class="fas fa-chevron-up text-gray-400"></i> </button>
+
+    <div id="paperDropdown" class="custom-dropdown-content glass-panel absolute bottom-full left-0 w-full mb-3 shadow-2xl p-2 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl">
+        <div class="space-y-1">
+            <div onclick="app.setPaper('lined')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded" style="background: repeating-linear-gradient(transparent, transparent 6px, #ccc 7px);"></div>
+                <span class="font-bold text-sm">Standard Lined</span>
+            </div>
+            <div onclick="app.setPaper('classmate')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded" style="background: repeating-linear-gradient(transparent, transparent 4px, #9facb8 5px);"></div>
+                <span class="font-bold text-sm">Classmate™ Style</span>
+            </div>
+            <div onclick="app.setPaper('black_margin')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded border-l-4 border-black"></div>
+                <span class="font-bold text-sm">Black Margin</span>
+            </div>
+            <div onclick="app.setPaper('legal')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-yellow-100 rounded border-l-4 border-red-300"></div>
+                <span class="font-bold text-sm">Legal Pad (Yellow)</span>
+            </div>
+             <div onclick="app.setPaper('brand')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded border-l-4 border-pink-300"></div>
+                <span class="font-bold text-sm">Brand (Pink Line)</span>
+            </div>
+            <div onclick="app.setPaper('rough')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-[#fdf6e3] rounded"></div>
+                <span class="font-bold text-sm">Rough Vintage</span>
+            </div>
+            <div onclick="app.setPaper('grid')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded" style="background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px); background-size: 4px 4px;"></div>
+                <span class="font-bold text-sm">Math Grid</span>
+            </div>
+            <div onclick="app.setPaper('blueprint')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-blue-900 rounded"></div>
+                <span class="font-bold text-sm">Blueprint</span>
+            </div>
+            <div onclick="app.setPaper('dark_paper')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-gray-800 rounded"></div>
+                <span class="font-bold text-sm">Night Mode Paper</span>
+            </div>
+            <div onclick="app.setPaper('plain')" class="p-3 hover:bg-blue-500/10 cursor-pointer rounded-xl flex items-center gap-3 transition">
+                <div class="w-8 h-8 border bg-white rounded shadow-inner"></div>
+                <span class="font-bold text-sm">Plain White</span>
+            </div>
+        </div>
+    </div>
+</div>
+        </section>
+
+        <section id="controlsCol" class="flex flex-col gap-4 h-full animate-enter" style="animation-delay: 0.2s">
+            
+            <div class="glass-panel p-3 flex flex-wrap gap-3 items-center z-20 relative">
+                
+                <div class="relative group flex-1 min-w-[200px]">
+    <div class="absolute inset-0 bg-white/10 blur-lg rounded-2xl pointer-events-none"></div>
+    <select id="fontSelect" onchange="app.updateConfig('font', this.value)" 
+            class="w-full p-4 pl-6 rounded-2xl outline-none font-handwriting appearance-none cursor-pointer text-lg font-bold transition-all
+                   bg-white/30 dark:bg-black/20 border border-white/40 backdrop-blur-md hover:bg-white/40 text-gray-800 dark:text-white shadow-lg">
+        <optgroup label="Popular Handwriting">
+            <option value="'Homemade Apple'">Homemade Apple</option>
+            <option value="'Caveat'">Caveat Hand</option>
+            <option value="'Indie Flower'">Indie Flower</option>
+            <option value="'Reenie Beanie'">Reenie Beanie</option>
+        </optgroup>
+        <optgroup label="Cursive & Calligraphy">
+            <option value="'Dancing Script'">Dancing Script</option>
+            <option value="'Sacramento'">Sacramento</option>
+            <option value="'Mr Dafoe'">Mr Dafoe</option>
+        </optgroup>
+        <optgroup label="Messy & Casual">
+            <option value="'Nothing You Could Do'">Messy Script</option>
+            <option value="'Rock Salt'">Rock Salt</option>
+            <option value="'Gloria Hallelujah'">Gloria Hallelujah</option>
+        </optgroup>
+    </select>
+    <div class="absolute right-5 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-60">
+        <i class="fas fa-chevron-down text-gray-800 dark:text-white"></i>
+    </div>
+</div>
+
+                <div class="flex items-center bg-white/20 rounded-xl p-1 h-12">
+                    <input type="number" value="24" oninput="app.updateConfig('fontSize', this.value)" class="w-12 bg-transparent text-center font-bold outline-none h-full border-r border-gray-400/20">
+                    <button onclick="app.toggleBold()" id="btnBold" class="w-10 h-full flex items-center justify-center font-bold text-gray-600 hover:text-black">B</button>
+                    <button onclick="app.toggleItalic()" id="btnItalic" class="w-10 h-full flex items-center justify-center italic font-serif text-gray-600 hover:text-black">I</button>
+                </div>
+
+                <div class="w-12 h-12 relative rounded-xl overflow-hidden border border-white/30 shadow-sm">
+                    <input type="color" id="inkColorPicker" value="#1a1a2e" oninput="app.updateConfig('color', this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div id="inkColorPreview" class="w-full h-full bg-[#1a1a2e]"></div>
+                </div>
+
+                <button onclick="toggleDropdown('scannerMenu')" class="relative overflow-hidden rounded-full px-5 py-3 shadow-lg transition-transform hover:scale-105 ml-auto">
+                    <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-90"></div>
+                    <div class="relative flex items-center gap-2 text-white font-bold text-sm">
+                        <i class="fas fa-sparkles"></i> <span class="hidden sm:inline">Humanize AI</span>
+                    </div>
+                </button>
+            </div>
+
+            <div id="scannerMenu" class="custom-dropdown-content glass-panel p-6">
+                <div class="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
+                    <h3 class="font-bold text-indigo-600 text-sm uppercase tracking-widest">Imperfection Engine</h3>
+                    <button onclick="toggleDropdown('scannerMenu')" class="text-xs font-bold opacity-50">CLOSE</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-2"><span>HAND JITTER</span> <span id="val_x">1.0</span></div>
+                        <input type="range" min="0" max="3" step="0.1" value="1.0" oninput="app.updateDistortion('x', this.value)">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-2"><span>ROTATION CHAOS</span> <span id="val_rot">2.0</span></div>
+                        <input type="range" min="0" max="5" step="0.5" value="2.0" oninput="app.updateDistortion('rot', this.value)">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-2"><span>SCANNER NOISE</span> <span id="val_noise">0.1</span></div>
+                        <input type="range" min="0" max="0.5" step="0.05" value="0.1" oninput="app.updateScanner('noise', this.value)">
+                    </div>
+                </div>
+            </div>
+
+                <div class="glass-panel p-1 relative flex flex-col group h-[350px] mr-8">                <div class="absolute top-3 right-3 z-20">
+                    <button onclick="toggleModal('exportModal')" class="glass-btn px-4 py-2 rounded-lg text-xs font-bold text-blue-600 flex items-center gap-2 shadow-sm bg-white/60">
+                         Export <i class="fas fa-share-square"></i>
+                    </button>
+                </div>
+
+                <textarea id="textInput" class="w-full h-full bg-transparent p-6 pr-20 resize-none outline-none text-base md:text-lg leading-relaxed placeholder-gray-400 rounded-xl text-gray-700 dark:text-gray-200" placeholder="Start typing here... Digital text will convert to handwriting instantly."></textarea>
+            </div>
+        </section>
+
+        <section id="historySection" class="hidden absolute inset-0 pt-24 px-4 lg:px-20 overflow-y-auto bg-[#f3f4f6] dark:bg-[#020617] z-10">
+             <div class="max-w-7xl mx-auto pb-32">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">Archives</h1>
+                        <p class="text-gray-500">Locally saved documents.</p>
+                    </div>
+                    <button onclick="db.clearAll()" class="glass-btn px-4 py-2 rounded-lg text-xs text-red-500 border-red-200">Clear All</button>
+                </div>
+                <div id="historyGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    </div>
+             </div>
+        </section>
+    </main>
+
+    <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[60] w-auto">
+        <div class="glass-panel px-6 py-2 rounded-full flex items-center gap-2 shadow-2xl border-white/60 bg-white/80 dark:bg-black/60 backdrop-blur-xl">
+            <button onclick="app.switchTab('home')" id="dock-home" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/10 text-blue-600 dark:text-blue-300 font-bold transition hover:scale-105">
+                <i class="fas fa-pen-nib text-lg"></i> <span class="text-sm">Studio</span>
+            </button>
+            <div class="w-[1px] h-6 bg-gray-400/30 mx-1"></div>
+            <button onclick="app.switchTab('history')" id="dock-history" class="flex items-center gap-2 px-4 py-2 rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-white transition hover:scale-105">
+                <i class="fas fa-history text-lg"></i> <span class="text-sm">Archives</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+    /* --- UTILS --- */
+    function toggleModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.classList.toggle('open');
+    }
+
+    function toggleDropdown(id) {
+        const d = document.getElementById(id);
+        if (d) d.classList.toggle('open');
+    }
+
+    function toggleSidebar() {
+        const s = document.getElementById('sidebarPopup');
+        if (s) s.classList.toggle('open');
+    }
+
+    class Toast {
+        static show(msg, type = 'info') {
+            const box = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            const colors = type === 'success' ? 'border-green-500 text-green-400' : 'border-blue-500 text-white';
+            el.className = `p-3 rounded-xl glass-panel bg-black/80 text-sm font-bold flex items-center gap-3 animate-enter border-l-4 ${colors}`;
+            el.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
+            box.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+    }
+
+    /* --- DATABASE --- */
+    const db = {
+        save: (doc) => {
+            let history = JSON.parse(localStorage.getItem('scriptura_history') || '[]');
+            history.unshift(doc);
+            localStorage.setItem('scriptura_history', JSON.stringify(history));
+            Toast.show('Saved to Archives', 'success');
+        },
+        loadAll: () => {
+            return JSON.parse(localStorage.getItem('scriptura_history') || '[]');
+        },
+        clearAll: () => {
+            if (confirm('Delete all history?')) {
+                localStorage.removeItem('scriptura_history');
+                app.renderHistory();
+            }
+        }
+    };
+
+    /* --- MAIN APP --- */
+    class ScripturaApp {
+        constructor() {
+            this.state = {
+                text: "Welcome to Scriptura AI.\n\nType anywhere to begin. This tool converts digital text into realistic, imperfect handwriting using HTML5 Canvas procedural generation.\n\nAdjust the 'Humanize' settings to change the ink flow, jitter, and rotation chaos.",
+                font: "'Homemade Apple'",
+                fontSize: 24,
+                isBold: false,
+                isItalic: false,
+                color: "#1a1a2e",
+                paper: "lined",
+                distortion: { x: 1.0, y: 0.5, rot: 2.0 },
+                scanner: { noise: 0.1, contrast: 1.0 },
+
+                // Layout Defaults
+                pageWidth: 600,
+                pageHeight: 800,
+                marginTop: 60,
+                marginLeft: 60,
+                lineHeight: 30,
+
+                // Runtime
+                pages: [],
+                currentPage: 0,
+                exportFormat: 'pdf',
+                exportRange: 'current'
+            };
+
+            this.canvas = document.getElementById('paperCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.timer = null;
+
+            this.init();
+        }
+
+        init() {
+            this.canvas.width = this.state.pageWidth;
+            this.canvas.height = this.state.pageHeight;
+            document.getElementById('textInput').value = this.state.text;
+            
+            // Initialize with default paper
+            this.setPaper('lined');
+
+            // Bind Inputs
+            document.getElementById('textInput').addEventListener('input', (e) => {
+                this.state.text = e.target.value;
+                this.debounceRender();
+            });
+
+            this.render();
+        }
+
+        /* --- CONFIG --- */
+        updateConfig(key, val) {
+            this.state[key] = key === 'fontSize' ? parseInt(val) : val;
+            if (key === 'color') document.getElementById('inkColorPreview').style.background = val;
+            
+            // If font size changes, we might need to adjust line height for plain paper
+            if (key === 'fontSize' && this.state.paper === 'plain') {
+                this.state.lineHeight = this.state.fontSize * 1.5;
+            }
+            
+            this.debounceRender();
+        }
+
+        updateDistortion(key, val) {
+            this.state.distortion[key] = parseFloat(val);
+            document.getElementById(`val_${key}`).innerText = val;
+            this.debounceRender();
+        }
+
+        updateScanner(key, val) {
+            this.state.scanner[key] = parseFloat(val);
+            document.getElementById(`val_${key}`).innerText = val;
+            document.getElementById('scannerLayer').style.opacity = val;
+        }
+
+        toggleBold() {
+            this.state.isBold = !this.state.isBold;
+            document.getElementById('btnBold').classList.toggle('btn-active');
+            this.render();
+        }
+        toggleItalic() {
+            this.state.isItalic = !this.state.isItalic;
+            document.getElementById('btnItalic').classList.toggle('btn-active');
+            this.render();
+        }
+
+        /* --- PAPER LOGIC (10 STYLES) --- */
+        setPaper(type) {
+            this.state.paper = type;
+            const dropdown = document.getElementById('paperDropdown');
+            if (dropdown && dropdown.classList.contains('open')) toggleDropdown('paperDropdown');
+            
+            this.updatePaperIcon(type);
+
+            // 1. Set Display Name
+            const names = {
+                'lined': 'Standard Lined', 'classmate': 'Classmate™', 'black_margin': 'Black Margin',
+                'legal': 'Legal Pad', 'brand': 'Pink Margin', 'rough': 'Rough Vintage',
+                'grid': 'Math Grid', 'blueprint': 'Blueprint', 'dark_paper': 'Night Mode', 'plain': 'Plain White'
+            };
+            document.getElementById('paperName').innerText = names[type] || 'Paper';
+
+            // 2. Sync Text Layout Logic (Margins & Line Height)
+            // Reset defaults first
+            this.state.marginTop = 60;
+            this.state.marginLeft = 60;
+            this.state.lineHeight = 30;
+            
+            // Restore default color if switching away from blueprint/dark
+            if(this.state.color === '#ffffff' || this.state.color === '#e5e7eb') {
+                 this.state.color = '#1a1a2e';
+                 this.updateColorUI('#1a1a2e');
+            }
+
+            // Apply specific rules
+            if (type === 'classmate') {
+                this.state.lineHeight = 26; // Tighter
+                this.state.marginTop = 70;
+                this.state.marginLeft = 55;
+            } else if (type === 'legal') {
+                this.state.lineHeight = 32;
+                this.state.marginTop = 80;
+                this.state.marginLeft = 75; // Wide margin
+            } else if (type === 'brand') {
+                this.state.marginLeft = 70;
+            } else if (type === 'grid') {
+                this.state.lineHeight = 25; // Match grid size
+                this.state.marginTop = 25;
+                this.state.marginLeft = 25;
+            } else if (type === 'blueprint') {
+                this.state.lineHeight = 30;
+                this.state.color = '#ffffff'; // Force white ink
+                this.updateColorUI('#ffffff');
+            } else if (type === 'dark_paper') {
+                this.state.color = '#e5e7eb'; // Force light gray ink
+                this.updateColorUI('#e5e7eb');
+            } else if (type === 'plain') {
+                this.state.lineHeight = this.state.fontSize * 1.5;
+            } else if (type === 'black_margin') {
+                this.state.marginLeft = 65;
+            }
+
+            this.render();
+        }
+
+        updateColorUI(hex) {
+            document.getElementById('inkColorPicker').value = hex;
+            document.getElementById('inkColorPreview').style.background = hex;
+        }
+
+        updatePaperIcon(type) {
+            const icon = document.getElementById('paperIcon');
+            // Reset
+            icon.style.backgroundImage = 'none';
+            icon.style.backgroundColor = '#fff';
+            icon.style.border = '1px solid #ddd';
+            icon.style.borderLeft = '1px solid #ddd';
+
+            // Apply Style
+            if (type === 'lined') icon.style.backgroundImage = 'repeating-linear-gradient(transparent, transparent 4px, #ccc 5px)';
+            if (type === 'classmate') icon.style.backgroundImage = 'repeating-linear-gradient(transparent, transparent 3px, #9facb8 4px)';
+            if (type === 'black_margin') icon.style.borderLeft = '6px solid black';
+            if (type === 'legal') { icon.style.backgroundColor = '#fef9c3'; icon.style.borderLeft = '4px solid #f87171'; }
+            if (type === 'brand') icon.style.borderLeft = '4px solid pink';
+            if (type === 'rough') icon.style.backgroundColor = '#fdf6e3';
+            if (type === 'grid') icon.style.backgroundImage = 'linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px)';
+            if (type === 'blueprint') icon.style.backgroundColor = '#1e3a8a';
+            if (type === 'dark_paper') icon.style.backgroundColor = '#1f2937';
+        }
+
+        /* --- RENDER --- */
+        debounceRender() {
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => this.render(), 50);
+        }
+
+        render() {
+            // 1. Calculate Layout / Text Wrapping
+            const ctx = this.ctx;
+            const weight = this.state.isBold ? 'bold ' : '';
+            const style = this.state.isItalic ? 'italic ' : '';
+            ctx.font = `${style}${weight}${this.state.fontSize}px ${this.state.font}`;
+
+            const lines = [];
+            const paragraphs = this.state.text.split('\n');
+            const maxWidth = this.state.pageWidth - (this.state.marginLeft + 20);
+
+            paragraphs.forEach(para => {
+                if (para === "") { lines.push(""); return; }
+                const words = para.split(' ');
+                let currentLine = "";
+                words.forEach(word => {
+                    const test = currentLine + word + " ";
+                    if (ctx.measureText(test).width > maxWidth && currentLine !== "") {
+                        lines.push(currentLine);
+                        currentLine = word + " ";
+                    } else {
+                        currentLine = test;
+                    }
+                });
+                lines.push(currentLine);
+            });
+
+            // Pagination
+            const linesPerPage = Math.floor((this.state.pageHeight - this.state.marginTop - 40) / this.state.lineHeight);
+            this.state.pages = [];
+            for (let i = 0; i < lines.length; i += linesPerPage) {
+                this.state.pages.push(lines.slice(i, i + linesPerPage));
+            }
+            if (this.state.pages.length === 0) this.state.pages.push([]);
+
+            // Update Page Count UI
+            const total = this.state.pages.length;
+            if (this.state.currentPage >= total) this.state.currentPage = total - 1;
+            document.getElementById('currentPage').innerText = `${this.state.currentPage + 1}/${total}`;
+
+            this.drawPage(this.state.pages[this.state.currentPage]);
+        }
+
+        drawPage(lines) {
+            const ctx = this.ctx;
+            const w = this.state.pageWidth;
+            const h = this.state.pageHeight;
+            const paper = this.state.paper;
+
+            // A. CLEAR & BACKGROUND COLOR
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#ffffff'; // Default
+            if (paper === 'rough') ctx.fillStyle = '#fdf6e3';
+            if (paper === 'legal') ctx.fillStyle = '#fef9c3'; // Yellow
+            if (paper === 'blueprint') ctx.fillStyle = '#1e3a8a'; // Navy
+            if (paper === 'dark_paper') ctx.fillStyle = '#1f2937'; // Dark Gray
+            ctx.fillRect(0, 0, w, h);
+
+            // B. DRAW PAPER PATTERNS
+            ctx.lineWidth = 1;
+            
+            // Utils
+            const drawHLine = (y, color) => { ctx.beginPath(); ctx.strokeStyle = color; ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); };
+            const drawVLine = (x, color, width=1) => { ctx.beginPath(); ctx.lineWidth = width; ctx.strokeStyle = color; ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); ctx.lineWidth = 1; };
+
+            // 1. Standard Lines (Lined, Brand, Black Margin)
+            if (['lined', 'brand', 'black_margin'].includes(paper)) {
+                // Horizontal
+                for (let y = this.state.marginTop; y < h; y += this.state.lineHeight) {
+                    drawHLine(y, 'rgba(0, 160, 255, 0.2)');
+                }
+                // Margins
+                if (paper === 'brand') drawVLine(this.state.marginLeft - 10, '#f472b6', 2); // Pink
+                else if (paper === 'black_margin') drawVLine(this.state.marginLeft - 10, '#000000', 3); // Thick Black
+                else drawVLine(this.state.marginLeft - 10, 'rgba(255, 100, 100, 0.4)'); // Standard Red
+            }
+            
+            // 2. Classmate
+            else if (paper === 'classmate') {
+                for (let y = this.state.marginTop; y < h; y += this.state.lineHeight) {
+                    drawHLine(y, '#9facb8');
+                }
+                drawVLine(this.state.marginLeft - 10, '#ef4444', 2); // Strong Red
+                // Date Box
+                ctx.strokeStyle = '#9facb8'; ctx.strokeRect(w - 100, 20, 80, 30);
+            }
+
+            // 3. Legal Pad
+            else if (paper === 'legal') {
+                for (let y = this.state.marginTop; y < h; y += this.state.lineHeight) {
+                    drawHLine(y, '#93c5fd'); // Blue lines
+                }
+                // Double Margin
+                drawVLine(this.state.marginLeft - 10, '#ef4444');
+                drawVLine(this.state.marginLeft - 16, '#ef4444');
+            }
+
+            // 4. Grid & Blueprint
+            else if (paper === 'grid' || paper === 'blueprint') {
+                const gs = paper === 'grid' ? 25 : 30;
+                const color = paper === 'blueprint' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+                ctx.strokeStyle = color;
+                for (let x = 0; x < w; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+                for (let y = 0; y < h; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+            }
+
+            // 5. Dark Mode
+            else if (paper === 'dark_paper') {
+                for (let y = this.state.marginTop; y < h; y += this.state.lineHeight) {
+                    drawHLine(y, 'rgba(255,255,255,0.1)');
+                }
+            }
+
+            // C. DRAW TEXT
+            ctx.fillStyle = this.state.color;
+            ctx.textBaseline = "bottom";
+            const weight = this.state.isBold ? 'bold ' : '';
+            const style = this.state.isItalic ? 'italic ' : '';
+            ctx.font = `${style}${weight}${this.state.fontSize}px ${this.state.font}`;
+
+            let cursorY = this.state.marginTop;
+
+            lines.forEach(line => {
+                cursorY += this.state.lineHeight;
+                let cursorX = this.state.marginLeft;
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    const charW = ctx.measureText(char).width;
+
+                    ctx.save();
+                    // Jitter Logic
+                    const jX = (Math.random() - 0.5) * this.state.distortion.x;
+                    const jY = (Math.random() - 0.5) * (this.state.distortion.x * 0.5);
+                    const rot = (Math.random() - 0.5) * (this.state.distortion.rot * 0.05);
+
+                    ctx.translate(cursorX + jX, cursorY + jY);
+                    ctx.rotate(rot);
+                    ctx.fillText(char, 0, 0);
+                    ctx.restore();
+
+                    cursorX += charW;
+                }
+            });
+        }
+
+        /* --- NAVIGATION & ACTIONS --- */
+        nextPage() {
+            if (this.state.currentPage < this.state.pages.length - 1) {
+                this.state.currentPage++;
+                this.render();
+            }
+        }
+        prevPage() {
+            if (this.state.currentPage > 0) {
+                this.state.currentPage--;
+                this.render();
+            }
+        }
+
+        switchTab(tab) {
+            const studio = document.getElementById('previewCol');
+            const controls = document.getElementById('controlsCol');
+            const history = document.getElementById('historySection');
+            const btnHome = document.getElementById('dock-home');
+            const btnHist = document.getElementById('dock-history');
+
+            if (tab === 'home') {
+                studio.style.display = 'flex';
+                controls.style.display = 'flex';
+                history.classList.add('hidden');
+                btnHome.classList.add('bg-black/5', 'text-blue-600');
+                btnHist.classList.remove('bg-black/5', 'text-blue-600');
+            } else {
+                studio.style.display = 'none';
+                controls.style.display = 'none';
+                history.classList.remove('hidden');
+                btnHist.classList.add('bg-black/5', 'text-blue-600');
+                btnHome.classList.remove('bg-black/5', 'text-blue-600');
+                this.renderHistory();
+            }
+            document.getElementById('sidebarPopup').classList.remove('open');
+        }
+
+        toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            Toast.show('Theme Toggled');
+        }
+
+        /* --- EXPORT --- */
+        setExportFormat(fmt) {
+            this.state.exportFormat = fmt;
+            document.getElementById('btn-fmt-pdf').classList.toggle('border-blue-500', fmt === 'pdf');
+            document.getElementById('btn-fmt-img').classList.toggle('border-purple-500', fmt === 'img');
+        }
+        setExportRange(rng) {
+            this.state.exportRange = rng;
+            document.getElementById('btn-range-curr').className = rng === 'current' ? 'flex-1 py-2 rounded-md text-xs font-bold bg-white/50 shadow-sm' : 'flex-1 py-2 rounded-md text-xs font-bold opacity-60';
+            document.getElementById('btn-range-all').className = rng === 'all' ? 'flex-1 py-2 rounded-md text-xs font-bold bg-white/50 shadow-sm' : 'flex-1 py-2 rounded-md text-xs font-bold opacity-60';
+        }
+
+        async processExport() {
+            toggleModal('exportModal');
+            Toast.show('Generating file...', 'info');
+
+            const pagesToExport = this.state.exportRange === 'current'
+                ? [this.state.pages[this.state.currentPage]]
+                : this.state.pages;
+
+            if (this.state.exportFormat === 'img') {
+                this.canvas.toBlob(blob => {
+                    saveAs(blob, 'scriptura-export.png');
+                    Toast.show('Image Saved', 'success');
+                    this.saveToHistory();
+                });
+            } else {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait', unit: 'px', format: [this.state.pageWidth, this.state.pageHeight]
+                });
+
+                const savedPage = this.state.currentPage;
+
+                for (let i = 0; i < pagesToExport.length; i++) {
+                    if (i > 0) pdf.addPage();
+                    this.drawPage(pagesToExport[i]);
+                    const img = this.canvas.toDataURL('image/jpeg', 0.8);
+                    pdf.addImage(img, 'JPEG', 0, 0, this.state.pageWidth, this.state.pageHeight);
+                }
+
+                pdf.save('scriptura-doc.pdf');
+                
+                // Restore state
+                this.state.currentPage = savedPage;
+                this.drawPage(this.state.pages[savedPage]);
+                Toast.show('PDF Saved', 'success');
+                this.saveToHistory();
+            }
+        }
+
+        saveToHistory() {
+            const preview = this.canvas.toDataURL('image/jpeg', 0.2);
+            db.save({
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                preview: preview,
+                text: this.state.text
+            });
+        }
+
+        renderHistory() {
+            const list = db.loadAll();
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = '';
+            list.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'glass-panel p-3 hover:scale-[1.02] transition cursor-pointer';
+                el.innerHTML = `
+                    <img src="${item.preview}" class="w-full aspect-[3/4] object-cover rounded border border-black/10 mb-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold opacity-50">${item.date}</span>
+                        <button class="text-xs text-blue-500 font-bold">LOAD</button>
+                    </div>
+                `;
+                el.onclick = () => {
+                    this.state.text = item.text;
+                    document.getElementById('textInput').value = item.text;
+                    this.switchTab('home');
+                    this.render();
+                };
+                grid.appendChild(el);
+            });
+        }
+    }
+
+    const app = new ScripturaApp();
+    // 2. Add at the bottom of <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('App is ready for offline use'))
+            .catch(err => console.error('SW Error', err));
+    }
+</script>
+
+</body>
+</html>
